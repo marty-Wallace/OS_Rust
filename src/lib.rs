@@ -1,26 +1,25 @@
 #![feature(lang_items)]
+#![feature(const_fn)]
+#![feature(unique)]
+
 #![no_std]
 
 extern crate rlibc;
+extern crate volatile;
+extern crate spin;
+
+#[macro_use]
+mod vga_buffer;
 
 #[no_mangle]
 pub extern fn rust_main() {
     // ATT we have a small stack and no guard page
+    vga_buffer::clear_screen();
+    println!("Hello world{}", "!");
 
-    let hello = b"Hello World";
-    let color_byte = 0x1f;
-
-    let mut hello_colored = [color_byte; 24];
-    for (i, char_byte) in hello.into_iter().enumerate() {
-        hello_colored[i*2] = *char_byte;
-    }
-
-    let buffer_ptr = (0xb8000 + 1988) as *mut _;
-    unsafe {
-        *buffer_ptr = hello_colored;
-    }
 
     loop{}
+
 }
 
 #[lang = "eh_personality"] extern fn eh_personality() {}
@@ -32,4 +31,6 @@ pub extern fn rust_main() {
 pub extern "C" fn _Unwind_Resume() -> ! {
     loop {}
 }
+
+
 
