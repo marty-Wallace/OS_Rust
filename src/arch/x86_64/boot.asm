@@ -12,7 +12,7 @@ start:
 
     call set_up_page_tables
     call enable_paging
-
+    call set_up_SSE
     lgdt [gdt64.pointer]
 
     jmp gdt64.code:long_mode_start
@@ -75,6 +75,27 @@ set_up_page_tables:
     cmp ecx, 512       ; if counter == 512, the whole P2 table is mapped
     jne .map_p2_table  ; else map the next entry
     ret
+
+set_up_SSE:
+    ; check for SSE
+    mov eax, 0x1
+    cpuid
+    test edx, 1<<25
+    jz .no_SSE
+
+    ;enable SSE
+    mov eax, cr0
+    and ax, 0xFFFB
+    or ax, 0x2
+    mov cr0, eax
+    mov eax, cr4
+    or ax, 3 << 9
+    mov cr4, eax
+
+    ret
+.no_SSE
+    mov al, "a"
+    jmp error
 
 enable_paging:
     ; load P4 to cr3 register (cpu uses this to access the P4 table)
